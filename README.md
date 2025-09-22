@@ -1,83 +1,105 @@
-# Directory Services – Übersicht
+# Planung – AD & Cloud Setup Sheet
 
-## Definition
-Aus technischer Sicht ist ein Verzeichnisdienst nichts anderes als eine spezialisierte **Datenbank**, die Objekte und deren Attribute hierarchisch speichert und verwaltet.
-
----
-
-## Kernaufgaben eines Directory Services
-1. Authentifizierung  
-2. Autorisierung  
-3. Zentrale Benutzer- und Ressourcenverwaltung  
-4. Bereitstellung von Richtlinien  
+| Kategorie | Wert |
+|---|---|
+| **Projektname** | M159 – Neue Gesamtstruktur & Client (AWS) |
+| **Datum** | 22.09.2025 |
+| **Verantwortlicher** | Lionel / Team M159 |
+| **Cloud-Anbieter** | AWS |
 
 ---
 
-## Beispiele für Objekte (Ressourcen)
-- Benutzer  
-- Computer  
-- Gruppen  
-- Drucker  
-- Freigaben  
+## Netzwerk Setup
+
+| Beschreibung | Details |
+|---|---|
+| VPC Name | M159-VPC |
+| VPC CIDR Block | 10.0.0.0/16 |
+| Subnetze | private-subnet-1: 10.0.1.0/24 (DC + Client) |
+| Verfügbare Zonen | z. B. eu-central-1a (oder nach Region, Zürich wäre eu-central-1) |
+| Route Tables | Internes Routing VPC, kein Internet Gateway für Private Subnet |
+| NAT / Internet Zugriff | Nur NAT Gateway (falls notwendig z. B. für Updates vom DC) |
 
 ---
 
-## Merkmale eines Directory Services
-- Hierarchische Struktur  
-- Zentralisiert  
-- Replizierbar  
-- Standardisierte Protokolle (LDAP/Kerberos)  
-- Skalierbar  
+## Sicherheitsgruppen & Ports
+
+| Sicherheitsgruppe | Zweck / Zugehörigkeit | Eingehend | Ausgehend |
+|---|---|---|---|
+| SG-DC | Domänencontroller (SRV-DC01) | RDP 3389 erlauben nur von Admin IP;<br>DNS 53 TCP/UDP;<br>LDAP 389;<br>Kerberos 88;<br>SMB 445;<br>RPC 135 + RPC dynamic ports 49152-65535; <br>Zeit/NTP 123 UDP | Alles innerhalb VPC erlaubt; ausgehend alles erlaubt |
+| SG-Client | Windows Client (CL1) | RDP 3389 nur von Admin IP; <br>alle relevanten Ports vom DC zulassen | Ausgehend alles |
+| Admin Zugriff | Falls separate SG nötig | SSH / RDP von Admin IP | — |
 
 ---
 
-## Zusammenhang: Objekt – Attribut – Wert
-Korrekte Aussagen:  
-- ✔ Benutzerattribute haben einen Namen und einen Wert  
-- ✔ Das Benutzerpasswortattribut bestehend aus Namen und Wert ist ein Benutzerattribut  
-- ✔ Der Vorname ist ein Benutzerattribut  
+## EC2 Instanzen / Server Setup
+
+| Name | Rolle | Instance Type | Betriebssystem | Private IP | Hostname |
+|---|---|---|---|---|---|
+| SRV-DC01 | Domänencontroller / DNS | t3.medium (oder größer je nach Ressourcen) | Windows Server 2022 | 10.0.1.10 | SRV-DC01 |
+| CL1 | Client | t3.small / t3.medium | Windows 10/11 (oder Windows Server als Test) | 10.0.1.20 | CL1 |
 
 ---
 
-## Objektklasse
-Eine **Objektklasse** ist eine Vorlage, die definiert, welche Attribute ein bestimmtes Objekt besitzen darf oder muss.
+## AD Struktur & Domäne
+
+| Parameter | Wert |
+|---|---|
+| Gesamtstruktur (Forest) | tbz.local |
+| Domäne | tbz.local |
+| NetBIOS Name | TBZ |
+| Standort (Site) | Default / eine Site wenn nur ein DC |
+| DNS Server Rolle | Auf SRV-DC01 |
+| Globaler Katalog | Ja |
 
 ---
 
-## Nachteile eines Directory Services
-- Hohe Komplexität und Verwaltungsaufwand  
-- Zentrale Abhängigkeit (Single Point of Failure)  
+## Zeit / Synchronisation
+
+| Komponente | Zeitquelle / NTP Einstellungen |
+|---|---|
+| SRV-DC01 | Amazon NTP (oder spezifizierte NTP Server) |
+| CL1 | Sync mit DC / über Domäne |
 
 ---
 
-## IT-Situationen
-- **Mit Directory Service:** Unternehmen mit vielen Mitarbeitern und Computern, die zentral verwaltet werden müssen.  
-- **Ohne Directory Service:** Kleines Büro mit wenigen unabhängigen Rechnern.  
+## DNS Setup
+
+| Element | Beschreibung |
+|---|---|
+| Vorwärts-Lookupzone | tbz.local |
+| Reverse-Lookupzone | 10.0.1.0/24 |
+| DNS Records geprüft | SRV-DC01 A / PTR; SRV Records AD (Kerberos, LDAP, etc.) |
 
 ---
 
-## Administratoren
-- **Lokaler Administrator:** Hat volle Rechte nur auf einem einzelnen Rechner.  
-- **Domänenadministrator:** Hat volle Rechte über die gesamte Domäne hinweg.  
+## Domänenbeitritt Client
+
+| Beschreibung | Details |
+|---|---|
+| Domänenname | tbz.local |
+| Credentials für Join | Domänen-Admin (z. B. Administrator) |
+| Hostname Client | CL1 |
+| Neustart erforderlich | Ja, nach dem Join |
 
 ---
 
-## Domänencontroller
-- **Aufgabe:** Bereitstellung und Verwaltung des Directory Services inkl. Authentifizierung und Autorisierung.  
-- **Abkürzung DC:** Domain Controller  
+## Test & Validierung
+
+| Testfall | Erwartetes Ergebnis |
+|---|---|
+| Pingen DC vom Client | klappt (Name + FQDN → 10.0.1.10) |
+| DNS Auflösung prüfen | `nslookup tbz.local` → IP des DC |
+| ADUC auf DC | Computerobjekt „CL1“ erscheint unter **Computers** |
+| Zeitdifferenz | < 5 Minuten |
+| RDP Zugriff | Nur Admin IP zugänglich |
 
 ---
 
-## Weitere Abkürzungen
-- **OU / OE:** Organizational Unit / Organisationseinheit  
+## Sonstige / Bemerkungen
 
----
+- DSRM Passwort setzen und sicher dokumentieren  
+- Sicherstellen, dass Security Groups korrekt sind, sonst Probleme bei AD Kommunikation  
+- Updates & Patches: DC evtl. Zugriff ins Internet über NAT, sonst manuell  
+- Backup Strategie: ggf. Snapshot der DC-Instanz vor größeren Änderungen  
 
-## Begriffe
-- **On-Premises:** IT-Infrastruktur wird lokal im eigenen Rechenzentrum betrieben.  
-- **MS AD DS vs. Entra ID:** AD DS ist lokal (on-premises), Entra ID ist Microsofts Cloud-Verzeichnisdienst.  
-- **Intune, MDM & MAM:** Intune = Cloud-Tool zur Verwaltung; MDM = Geräteverwaltung; MAM = App- und Datenverwaltung.  
-- **Tenant:** Isolierte Instanz einer Cloud-Umgebung (z. B. Microsoft 365-Mandant).  
-- **Hybrid-AD-Umgebung:** AD-Umgebung mit Entra ID Integration.  
-
----
