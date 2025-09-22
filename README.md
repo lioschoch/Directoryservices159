@@ -4,7 +4,7 @@
 |---|---|
 | **Projektname** | M159 – Neue Gesamtstruktur & Client (AWS) |
 | **Datum** | 22.09.2025 |
-| **Verantwortlicher** | Lionel / Team M159 |
+| **Verantwortlicher** | Lionel Schoch / Team M159 |
 | **Cloud-Anbieter** | AWS |
 
 ---
@@ -16,7 +16,7 @@
 | VPC Name | M159-VPC |
 | VPC CIDR Block | 10.0.0.0/16 |
 | Subnetze | private-subnet-1: 10.0.1.0/24 (DC + Client) |
-| Verfügbare Zonen | z. B. eu-central-1a (oder nach Region, Zürich wäre eu-central-1) |
+| Verfügbare Zonen | USA (Nord-Virginia) |
 | Route Tables | Internes Routing VPC, kein Internet Gateway für Private Subnet |
 | NAT / Internet Zugriff | Nur NAT Gateway (falls notwendig z. B. für Updates vom DC) |
 
