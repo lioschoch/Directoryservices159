@@ -36,8 +36,8 @@
 
 | Name | Rolle | Instance Type | Betriebssystem | Private IP | Hostname |
 |---|---|---|---|---|---|
-| SRV-DC01 | Domänencontroller / DNS | t3.medium (oder größer je nach Ressourcen) | Windows Server 2022 | 10.0.1.10 | SRV-DC01 |
-| CL1 | Client | t3.small / t3.medium | Windows 10/11 (oder Windows Server als Test) | 10.0.1.20 | CL1 |
+| SRV-DC01 | Domänencontroller / DNS | t3.medium | Windows Server 2025 | 10.0.2.10 | SRV-DC01 |
+| CL1 | Client | t3.small | Windows Server 2025 | 10.0.2.20 | CL1 |
 
 ---
 
@@ -45,7 +45,7 @@
 
 | Parameter | Wert |
 |---|---|
-| Gesamtstruktur (Forest) | tbz.local |
+| Gesamtstruktur | tbz.local |
 | Domäne | tbz.local |
 | NetBIOS Name | TBZ |
 | Standort (Site) | Default / eine Site wenn nur ein DC |
@@ -54,11 +54,22 @@
 
 ---
 
+## AD User & Gruppe
+
+| Parameter | Anmeldenamen | Passwort |
+|---|---|
+| Administrator | Administrator | rsa passwd |
+| Max Musterman | mmustermann | Boppelsen8113 |
+
+
+
+---
+
 ## Zeit / Synchronisation
 
 | Komponente | Zeitquelle / NTP Einstellungen |
 |---|---|
-| SRV-DC01 | Amazon NTP (oder spezifizierte NTP Server) |
+| SRV-DC01 | Amazon NTP |
 | CL1 | Sync mit DC / über Domäne |
 
 ---
@@ -68,8 +79,8 @@
 | Element | Beschreibung |
 |---|---|
 | Vorwärts-Lookupzone | tbz.local |
-| Reverse-Lookupzone | 10.0.1.0/24 |
-| DNS Records geprüft | SRV-DC01 A / PTR; SRV Records AD (Kerberos, LDAP, etc.) |
+| Reverse-Lookupzone | 10.0.2.0/24 |
+| DNS Records geprüft | SRV-DC01 A / PTR; SRV Records AD |
 
 ---
 
@@ -78,7 +89,7 @@
 | Beschreibung | Details |
 |---|---|
 | Domänenname | tbz.local |
-| Credentials für Join | Domänen-Admin (z. B. Administrator) |
+| Credentials für Join | Administrator |
 | Hostname Client | CL1 |
 | Neustart erforderlich | Ja, nach dem Join |
 
